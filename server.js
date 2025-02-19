@@ -60,7 +60,16 @@ app.post('/webhook', (req, res) => {
 
   if (event === 'push') {
     const repoName = req.body.repository?.name;
-    console.log(`Push recibido desde el repositorio: ${repoName}`);
+    const branchRef = req.body.ref; // e.g., refs/heads/master
+    const branch = branchRef.split('/').pop(); // e.g., master
+
+    console.log(`Push recibido desde el repositorio: ${repoName} en ${branch}`);
+
+    // Verificar si el push es en la rama master
+    if (branch !== 'master') {
+      console.log(`⚠️ Push ignorado: no es en la rama master (${branch})`);
+      return res.status(200).send(`Push ignorado. Rama: ${branch}`);
+    }
 
     if (repoName === API_REPO_NAME) {
       console.log('Ejecutando script para API...');
