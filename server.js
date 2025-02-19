@@ -45,7 +45,6 @@ app.post('/webhook', (req, res) => {
     });
   } else if (event === 'ping') {
     console.log('Ping recibido');
-    console.log('payload:', req.body);
     res.status(200).send('pong');
   } else {
     res.status(200).send('Evento no manejado');
