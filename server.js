@@ -34,6 +34,7 @@ app.post('/webhook', (req, res) => {
 
   const event = req.headers['x-github-event'];
   if (event === 'push') {
+    res.status(200).send('Script ejecutado correctamente');
     // Ejecutar el script
     exec(`sh ${SCRIPT_PATH}`, (err, stdout, stderr) => {
       if (err) {
@@ -41,7 +42,6 @@ app.post('/webhook', (req, res) => {
         return res.status(500).send('Error al ejecutar el script');
       }
       console.log(`Salida: ${stdout}`);
-      res.status(200).send('Script ejecutado correctamente');
     });
   } else if (event === 'ping') {
     console.log('Ping recibido');
