@@ -7,7 +7,12 @@ const { exec } = require('child_process');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const GITHUB_SECRET = process.env.GITHUB_SECRET || '';
-const SCRIPT_PATH = process.env.SCRIPT_PATH || '';
+
+const API_REPO_NAME = process.env.API_REPO_NAME || '';
+const API_SCRIPT_PATH = process.env.API_SCRIPT_PATH || '';
+
+const FRONT_REPO_NAME = process.env.FRONT_REPO_NAME || '';
+const FRONT_SCRIPT_PATH = process.env.FRONT_SCRIPT_PATH || '';
 
 // Middleware para capturar el raw body y verificar la firma
 app.use(
@@ -26,6 +31,20 @@ function verifySignature(req) {
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
 }
 
+// Función para ejecutar el script correspondiente
+function runScript(scriptPath, res) {
+  // Ejecutar el script
+  exec(`sh ${scriptPath}`, (err, stdout, stderr) => {
+    if (err) {
+      console.error(`❌ Error ejecutando el script ${scriptPath}: ${err.message}`);
+      console.error(`stderr: ${stderr}`);
+      return;
+    }
+    console.log(`✅ Script ${scriptPath} ejecutado correctamente.`);
+    console.log(`stdout: ${stdout}`);
+  });
+}
+
 // Endpoint para el webhook
 app.post('/webhook', (req, res) => {
   if (!verifySignature(req)) {
@@ -33,22 +52,33 @@ app.post('/webhook', (req, res) => {
   }
 
   const event = req.headers['x-github-event'];
-  if (event === 'push') {
-    res.status(200).send('Script ejecutado correctamente');
-    // Ejecutar el script
-    exec(`sh ${SCRIPT_PATH}`, (err, stdout, stderr) => {
-      if (err) {
-        console.error(`Error ejecutando el script: ${err}`);
-        return res.status(500).send('Error al ejecutar el script');
-      }
-      console.log(`Salida: ${stdout}`);
-    });
-  } else if (event === 'ping') {
+
+  if (event === 'ping') {
     console.log('Ping recibido');
-    res.status(200).send('pong');
-  } else {
-    res.status(200).send('Evento no manejado');
+    return res.status(200).send('pong');
   }
+
+  if (event === 'push') {
+    const repoName = req.body.repository?.name;
+    console.log(`Push recibido desde el repositorio: ${repoName}`);
+
+    if (repoName === API_REPO_NAME) {
+      console.log('Ejecutando script para API...');
+      res.status(200).send('Ejecución de script iniciada');
+      return runScript(API_SCRIPT_PATH, res);
+    }
+
+    if (repoName === FRONT_REPO_NAME) {
+      console.log('Ejecutando script para Frontend...');
+      res.status(200).send('Ejecución de script iniciada');
+      return runScript(FRONT_SCRIPT_PATH, res);
+    }
+
+    console.log('Repositorio no reconocido');
+    return res.status(400).send('Repositorio no reconocido');
+  }
+
+  res.status(200).send(`Evento ${event} no manejado`);
 });
 
 app.listen(PORT, () => {
