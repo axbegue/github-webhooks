@@ -168,7 +168,7 @@ This project is licensed under the **MIT License**.
 
 ## 🚀 Author
 
-Developed by Antonio Begue(https://github.com/axbegue) 🚀
+Developed by Antonio Begue (https://github.com/axbegue) 🚀
 
 ```
 
